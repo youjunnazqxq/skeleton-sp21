@@ -5,9 +5,10 @@ package game2048;
  */
 public class Tile {
 
-    /** A new tile with VALUE as its value at (ROW, COL).  This
-     *  constructor is private, so all tiles are created by the
-     *  factory methods create, move, and merge. */
+
+    /** 一个新的方块，其 VALUE 为其值，位于 (ROW, COL) 处。
+     * 此构造函数是私有的，因此所有方块都通过工厂方法 create、move 和 merge 创建。
+     */
     private Tile(int value, int col, int row) {
         this.value = value;
         this.row = row;
@@ -30,13 +31,14 @@ public class Tile {
         return value;
     }
 
-    /** Return my next state.  Before I am moved or merged, I am my
-     *  own successor. */
+    /** 返回我的下一个状态。在我被移动或合并之前，我就是我自己的后继者。 */
     public Tile next() {
         return next == null ? this : next;
     }
 
-    /** Return a new tile at (ROW, COL) with value VALUE. */
+    /** 返回一个在 (ROW, COL) 处，值为 VALUE 的新方块。
+     * 这是一个静态工厂方法，用于创建新的 Tile 实例。
+     */
     public static Tile create(int value, int col, int row) {
         return new Tile(value, col, row);
     }
@@ -48,8 +50,10 @@ public class Tile {
         return result;
     }
 
-    /** Return the result of merging OTHERTILE with me after moving to
-     *  (COL, ROW). */
+    /** 返回将 OTHERTILE 与我合并后，移动到 (COL, ROW) 的结果。
+     * 此方法创建一个新的 Tile 对象代表合并后的状态（值翻倍），并将其设置为
+     * 当前 Tile 和 otherTile 的后继。
+     */
     public Tile merge(int col, int row, Tile otherTile) {
         assert value == otherTile.value();
         next = otherTile.next = new Tile(2 * value, col, row);

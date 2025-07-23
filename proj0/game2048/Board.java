@@ -11,9 +11,9 @@ import java.util.Random;
  * @author hug
  */
 public class Board implements Iterable<Tile> {
-    /** Current contents of the board. */
+    /** 棋盘的当前内容。 */
     private Tile[][] values;
-    /** Side that the board currently views as north. */
+    /** 棋盘当前视为北方的方向。 */
     private Side viewPerspective;
 
     public Board(int size) {
@@ -21,13 +21,13 @@ public class Board implements Iterable<Tile> {
         viewPerspective = Side.NORTH;
     }
 
-    /** Shifts the view of the board such that the board behaves as if side S is north. */
+    /** 改变棋盘的视角，使得棋盘表现得如同方向 S 是北方。 */
     public void setViewingPerspective(Side s) {
         viewPerspective = s;
     }
 
-    /** Create a board where RAWVALUES hold the values of the tiles on the board 
-     * (0 is null) with a current score of SCORE and the viewing perspective set to north. */
+    /** 创建一个棋盘，其中 RAWVALUES 包含棋盘上方块的值
+     * (0 表示空)，当前得分为 SCORE，并且视角设置为北方。 */
     public Board(int[][] rawValues, int score) {
         int size = rawValues.length;
         values = new Tile[size][size];

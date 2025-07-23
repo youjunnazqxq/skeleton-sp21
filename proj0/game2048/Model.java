@@ -44,22 +44,19 @@ public class Model extends Observable {
         this.gameOver = gameOver;
     }
 
-    /** Return the current Tile at (COL, ROW), where 0 <= ROW < size(),
-     *  0 <= COL < size(). Returns null if there is no tile there.
-     *  Used for testing. Should be deprecated and removed.
-     *  */
+    /** 返回 (COL, ROW) 处的当前方块 (Tile)，其中 0 <= ROW < size()，0 <= COL < size()。
+     * 如果该位置没有方块，则返回 null。用于测试。应该被废弃并移除。
+     */
     public Tile tile(int col, int row) {
         return board.tile(col, row);
     }
 
-    /** Return the number of squares on one side of the board.
-     *  Used for testing. Should be deprecated and removed. */
+    /** 返回棋盘一侧的方格数量。用于测试。应该被废弃并移除。 */
     public int size() {
         return board.size();
     }
 
-    /** Return true iff the game is over (there are no moves, or
-     *  there is a tile with value 2048 on the board). */
+    /** 返回游戏是否结束（没有可移动的方块，或者棋盘上有一个值为 2048 的方块）。 */
     public boolean gameOver() {
         checkGameOver();
         if (gameOver) {
@@ -73,12 +70,12 @@ public class Model extends Observable {
         return score;
     }
 
-    /** Return the current maximum game score (updated at end of game). */
+    /** 返回当前最高游戏分数（在游戏结束时更新）。 */
     public int maxScore() {
         return maxScore;
     }
 
-    /** Clear the board to empty and reset the score. */
+    /** 清空棋盘并重置得分。 */
     public void clear() {
         score = 0;
         gameOver = false;
@@ -86,26 +83,21 @@ public class Model extends Observable {
         setChanged();
     }
 
-    /** Add TILE to the board. There must be no Tile currently at the
-     *  same position. */
+    /** 将 TILE 添加到棋盘。同一位置不能有当前已存在的方块。 */
     public void addTile(Tile tile) {
         board.addTile(tile);
         checkGameOver();
         setChanged();
     }
 
-    /** Tilt the board toward SIDE. Return true iff this changes the board.
-     *
-     * 1. If two Tile objects are adjacent in the direction of motion and have
-     *    the same value, they are merged into one Tile of twice the original
-     *    value and that new value is added to the score instance variable
-     * 2. A tile that is the result of a merge will not merge again on that
-     *    tilt. So each move, every tile will only ever be part of at most one
-     *    merge (perhaps zero).
-     * 3. When three adjacent tiles in the direction of motion have the same
-     *    value, then the leading two tiles in the direction of motion merge,
-     *    and the trailing tile does not.
-     * */
+    /** 将棋盘向 SIDE 方向倾斜。如果棋盘发生变化，则返回 true。
+     * 1. 如果两个方块在移动方向上相邻且值相同，则它们合并为一个新方块，
+     * 新方块的值是原始值的两倍，并且这个新值会加到得分实例变量中。
+     * 2. 合并产生的方块在同一次倾斜中不会再次合并。因此，在每一次移动中，
+     * 每个方块最多只参与一次合并（可能为零次）。
+     * 3. 当移动方向上有三个相邻的方块具有相同的值时，
+     * 则移动方向上靠前的两个方块合并，而靠后的方块不合并。
+     */
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
@@ -113,55 +105,160 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
-
+        this.board.setViewingPerspective(side);
+        int size = this.board.size();
+        boolean [][] merge_judge=new boolean[size][size];
+        for (int i = 0; i < size; i++) {
+            if(board_move(i,merge_judge)){
+                changed = true;
+            };
+        }
+        this.board.setViewingPerspective(Side.NORTH);
         checkGameOver();
         if (changed) {
             setChanged();
         }
         return changed;
     }
+    public int help_board_move(int col,int row,boolean [][] b) {
+        int size = this.board.size();
+       Tile current_tile=this.board.tile(col,row);
+       int final_row=row;
+       for (int r =row+1;r<size;r++){
+           Tile next_tile=this.board.tile(col,r);
+           if (next_tile==null){
+               final_row=r;
+           }else if(next_tile.value()==current_tile.value()&&!b[col][r]){
+               final_row=r;
+               break;
+           }else{
+               break;
+           }
+       }return final_row;
+    }
+    public boolean board_move(int col,boolean [][] b) {
+        int size=this.board.size();
+        boolean column_changed=false;
+        for (int i=size-1;i>=0;i--){
+            Tile current_tile=this.board.tile(col,i);
+            if (current_tile==null){
+                continue;
+            }
+            int dest_row=help_board_move(col,i,b);
+            if (dest_row!=i){
+                column_changed = true;
+                int value=this.board.tile(col,i).value();
+            if (this.board.move(col,dest_row,current_tile)) {
+                this.score+=2*value;
+                b[col][dest_row]=true;
+            }
+            }
+        }return column_changed;
+    }
 
-    /** Checks if the game is over and sets the gameOver variable
-     *  appropriately.
+    /** 检查游戏是否结束并适当地设置 gameOver 变量。
      */
     private void checkGameOver() {
         gameOver = checkGameOver(board);
     }
 
-    /** Determine whether game is over. */
+    /** 判断游戏是否结束。 */
     private static boolean checkGameOver(Board b) {
         return maxTileExists(b) || !atLeastOneMoveExists(b);
     }
 
-    /** Returns true if at least one space on the Board is empty.
-     *  Empty spaces are stored as null.
-     * */
+    /** 如果棋盘上至少有一个空格，则返回 true。
+     * 空格存储为 null。
+     */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
+        // TODO: Fill in this function
+        int size=b.size();
+        for( int i=0;i<size;i++){
+            for (int  j=0;j<size;j++){
+                if (b.tile(i,j)==null){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
     /**
-     * Returns true if any tile is equal to the maximum valid value.
-     * Maximum valid value is given by MAX_PIECE. Note that
-     * given a Tile object t, we get its value with t.value().
+     * 如果任何方块等于最大有效值，则返回 true。
+     * 最大有效值由 MAX_PIECE 给出。请注意，
+     * 给定一个 Tile 对象 t，我们可以通过 t.value() 获取其值。
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        int size=b.size();
+        for( int i=0;i<size;i++){
+            for (int  j=0;j<size;j++){
+                if (b.tile(i,j)==null){
+                    continue;
+                }
+                if (b.tile(i,j).value()==MAX_PIECE){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
     /**
-     * Returns true if there are any valid moves on the board.
-     * There are two ways that there can be valid moves:
-     * 1. There is at least one empty space on the board.
-     * 2. There are two adjacent tiles with the same value.
+     * 如果棋盘上有任何有效的移动，则返回 true。
+     * 存在有效移动有两种情况：
+     * 1. 棋盘上至少有一个空位。
+     * 2. 有两个相邻的方块具有相同的值。
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        int size=b.size();
+        for( int i=0;i<size;i++){
+            for (int  j=0;j<size;j++){
+                if (equal_value(b,i,j) ||b.tile(i,j)==null){
+                    return true;
+                }
+            }
+        }
         return false;
     }
-
+    public static  boolean side_judge(Board b,int i ,int j){
+        if (i<0||j<0||i>=b.size()||j>=b.size()){
+            return false;
+        }else{
+        return true;}
+    }
+    public static boolean equal_value(Board b, int i, int j) {
+        Tile currentTile = b.tile(i, j);
+        if (currentTile == null) {
+            return false;
+        }
+        if (side_judge(b, i - 1, j)) {
+            Tile leftTile = b.tile(i - 1, j);
+            if (leftTile != null && currentTile.value() == leftTile.value()) {
+                return true;
+            }
+        }
+        if (side_judge(b, i + 1, j)) {
+            Tile rightTile = b.tile(i + 1, j);
+            if (rightTile != null && currentTile.value() == rightTile.value()) {
+                return true;
+            }
+        }
+        if (side_judge(b, i, j - 1)) {
+            Tile upTile = b.tile(i, j - 1);
+            if (upTile != null && currentTile.value() == upTile.value()) {
+                return true;
+            }
+        }
+        if (side_judge(b, i, j + 1)) {
+            Tile downTile = b.tile(i, j + 1);
+            if (downTile != null && currentTile.value() == downTile.value()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Override
      /** Returns the model as a string, used for debugging. */
