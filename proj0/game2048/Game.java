@@ -33,8 +33,11 @@ public class Game {
 
             boolean moved;
             moved = false;
+            System.out.println("【第2步】Game.playGame: 已添加新方块，即将进入循环等待输入。");
             while (!moved) {
                 String cmnd = _source.getKey();
+                System.out.println("【第3步】Game.playGame: 已从队列取出命令 '" + cmnd + "'，准备处理。");
+
                 switch (cmnd) {
                     case "Quit":
                         _playing = false;

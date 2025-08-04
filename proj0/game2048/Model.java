@@ -117,7 +117,7 @@ public class Model extends Observable {
         checkGameOver();
         if (changed) {
             setChanged();
-        }
+        } System.out.println("DEBUG: Tilt method returned " + changed);
         return changed;
     }
     public int help_board_move(int col,int row,boolean [][] b) {
