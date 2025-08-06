@@ -25,7 +25,6 @@ public class GuitarHeroLite {
                     stringC.pluck();
                 }
             }
-
             /* compute the superposition of samples */
             double sample = stringA.sample() + stringC.sample();
 
