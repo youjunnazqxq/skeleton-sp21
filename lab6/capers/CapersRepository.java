@@ -16,11 +16,10 @@ import static capers.Utils.*;
 public class CapersRepository {
     /** Current Working Directory. */
     static final File CWD = new File(System.getProperty("user.dir"));
-
+    static final File CAPERS_FOLDER = new File(".capers");
     /** Main metadata folder. */
-    static final File CAPERS_FOLDER = null; // TODO Hint: look at the `join`
-                                            //      function in Utils
-
+     // TODO Hint: look at the `join`
+    static final File DOG_FOLDER =Utils.join(CAPERS_FOLDER,"dogs");                                      //      function in
     /**
      * Does required filesystem operations to allow for persistence.
      * (creates any necessary folders or files)
@@ -32,6 +31,8 @@ public class CapersRepository {
      */
     public static void setupPersistence() {
         // TODO
+        CAPERS_FOLDER.mkdirs();
+        DOG_FOLDER.mkdirs();
     }
 
     /**
@@ -41,6 +42,16 @@ public class CapersRepository {
      */
     public static void writeStory(String text) {
         // TODO
+       File story_file=Utils.join(CAPERS_FOLDER,"story");
+       String fullStory;
+       if(story_file.exists()){
+           String oldContent=Utils.readContentsAsString(story_file);
+           fullStory=oldContent+text+"\n";
+       }else{
+           fullStory=text+"\n";
+       }
+       Utils.writeContents(story_file,fullStory);
+       System.out.print(fullStory);
     }
 
     /**
@@ -50,8 +61,10 @@ public class CapersRepository {
      */
     public static void makeDog(String name, String breed, int age) {
         // TODO
+        Dog newDog=new Dog(name,breed,age);
+        newDog.saveDog();
+        System.out.println(newDog.toString());
     }
-
     /**
      * Advances a dog's age persistently and prints out a celebratory message.
      * Also prints out the dog's information using toString().
@@ -60,5 +73,8 @@ public class CapersRepository {
      */
     public static void celebrateBirthday(String name) {
         // TODO
+        Dog birthdayDog = Dog.fromFile(name);
+        birthdayDog.haveBirthday();
+        birthdayDog.saveDog();
     }
 }
