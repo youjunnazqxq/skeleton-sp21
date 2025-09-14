@@ -489,7 +489,7 @@ public class Repository  {
                     byte[] contentFromTargetintwo =currentBlob.get_content();
                     contentFromTarget=new String(contentFromTargetintwo,StandardCharsets.UTF_8);
                 }
-                content+=contentFromCurrent+"\n=======\n"+contentFromTarget+"\n>>>>>>>";
+                content+=contentFromCurrent+"=======\n"+contentFromTarget+">>>>>>>";
                 File currentFile =Utils.join(CWD,fileName);
                 Utils.writeContents(currentFile,content);
                 add(fileName);
@@ -499,6 +499,7 @@ public class Repository  {
         String message="Merged "+targetBranch.getName()+" into "+currentBranch.getName()+".";
         Commit mergeCommit =new Commit(message,currentCommit.getCommitHashId(), targetCommit.getCommitHashId());
         currentBranch.changeCommit(mergeCommit.getCommitHashId());
+        mergeCommit.save();
         currentBranch.save();
         stage.clear();
         stage.save();
