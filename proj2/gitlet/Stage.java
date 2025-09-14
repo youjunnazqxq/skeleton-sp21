@@ -68,6 +68,7 @@ public class Stage implements Serializable {
         for(Map.Entry<String,String> entry :stageForAdd.entrySet()){
             System.out.println(entry.getKey());
         }
+        System.out.println();
         System.out.println("=== Removed Files ===");
         List<String> allRemove =new ArrayList<>(stageForRemove);
         Collections.sort(allRemove);

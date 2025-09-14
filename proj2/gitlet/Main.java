@@ -40,7 +40,7 @@ public class Main {
                 }
                 break;
             case "commit":
-                if(args.length<2){
+                if(args.length<2||args[1].isEmpty()){
                     System.out.println("Please enter a commit message.");
                     System.exit(0);
                 }else{
@@ -78,17 +78,16 @@ public class Main {
                 }
                 break;
             case "checkout":
-                if(args.length<2){
+            case "checkout":
+                // 严格匹配三种合法形式
+                if (args.length == 3 && args[1].equals("--")) {
+                    repository.check_fileName(args[2]);
+                } else if (args.length == 4 && args[2].equals("--")) {
+                    repository.check_commitId(args[1], args[3]);
+                } else if (args.length == 2) {
+                    repository.check_branchName(args[1]);
+                } else {
                     Utils.printErrorNoExist();
-                }else{
-                    if(args[1].equals("--")){
-                        repository.check_fileName(args[2]);
-                    } else if (args[2].equals("--")) {
-                        repository.check_commitId(args[1],args[3]);
-                    }else{
-                        repository.check_branchName(args[1]);
-                    }
-                }
                 break;
             case "reset":
                 if(args.length<2){

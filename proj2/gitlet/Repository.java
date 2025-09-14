@@ -202,6 +202,7 @@ public class Repository  {
         System.out.println();
         //打印暂存区和删除区
         stage.print();
+        System.out.println();
         /*打印已修改但未暂存
         *1.在当前commit中被跟跟踪，但在工作区已经被修改但违背暂存 */
         System.out.println("=== Modifications Not Staged For Commit ===");
@@ -246,6 +247,7 @@ public class Repository  {
         for(String toPrint:modiButNotCommit){
             System.out.println(toPrint);
         }
+        System.out.println();
         //获取未被跟踪的文件
         Set<String> unstrackedFile=new TreeSet<>();
         System.out.println("=== Untracked Files ===");
@@ -259,6 +261,7 @@ public class Repository  {
         for(String toPrint:unstrackedFile){
             System.out.println(toPrint);
         }
+        System.out.println();
     }
     /*branch*/
     public void branch(String newBranchName){
