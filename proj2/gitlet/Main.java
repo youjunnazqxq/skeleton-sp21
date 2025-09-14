@@ -94,9 +94,11 @@ public class Main {
                 }else{
                     repository.reset(args[1]);
                 }
+                break;
             case "merge":
                 if(args.length<2){
                     Utils.printErrorNoExist();
+                }else{
                     repository.merge(args[1]);
                 }
                 break;
