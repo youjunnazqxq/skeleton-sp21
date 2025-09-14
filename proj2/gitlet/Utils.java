@@ -17,6 +17,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Map;
 
 
 /** Assorted utilities.
@@ -138,6 +139,7 @@ class Utils {
 
     /** Return an object of type T read from FILE, casting it to EXPECTEDCLASS.
      *  Throws IllegalArgumentException in case of problems. */
+    /*第一个参数是你要保存的文件，第二参数是你要保存的内容*/
     static <T extends Serializable> T readObject(File file,
                                                  Class<T> expectedClass) {
         try {
@@ -153,6 +155,7 @@ class Utils {
     }
 
     /** Write OBJ to FILE. */
+    /*第一个参数是你要读取的文件，第二个参数更像是一个声明*/
     static void writeObject(File file, Serializable obj) {
         writeContents(file, serialize(obj));
     }
@@ -219,9 +222,6 @@ class Utils {
             throw error("Internal error serializing commit.");
         }
     }
-
-
-
     /* MESSAGES AND ERROR REPORTING */
 
     /** Return a GitletException whose message is composed from MSG and ARGS as
@@ -236,4 +236,64 @@ class Utils {
         System.out.printf(msg, args);
         System.out.println();
     }
+    static final  File CWD=new File(System.getProperty("user.dir"));
+    static final File GITLET_DIR=Utils.join(CWD,".gitlet");
+    public static final File OBJECTS_DIR = Utils.join(GITLET_DIR, "objects");
+    public static final File COMMITS_DIR = Utils.join(OBJECTS_DIR, "commits");
+    public static final File BRANCHES_DIR = join(Repository.GITLET_DIR, "branches");
+
+    //检查仓库是否存在
+    public static void isGitletExist(){
+         if(!GITLET_DIR.exists()){
+             System.out.println("Not in an initialized Gitlet directory.");
+             System.exit(0);
+         }
+    }
+    public static File findFile(String fileName){
+        File file=Utils.join(CWD,fileName);
+        return file;
+    }
+    public static void printErrorNoExist(){
+        System.out.println("Incorrect operands.");
+        System.exit(0);
+    }
+    //获取一个文件的哈希值
+    public static String getHash(File file){
+        byte[] content=readContents(file);
+        String hash=sha1(content);
+        return hash;
+    }
+    //判断指定的commit是否存在
+    public static boolean isCommitExist(String commitHash){
+        File commitFile=Utils.join(COMMITS_DIR,commitHash);
+        return commitFile.exists();
+    }
+    //判断分支是否存在
+    public static boolean isBranchExist(String branchName){
+        File branch=Utils.join(BRANCHES_DIR,branchName);
+        return branch.exists();
+    }
+    //删除在当前commit不在目标commit的文件
+    public static void deleteFile(Commit currentCommit,Commit targetCommit){
+        Map<String,String> currentblobHash =currentCommit.getBlob();
+        for(Map.Entry<String,String> entry:currentblobHash.entrySet()){
+            if(!targetCommit.isTracked(entry.getKey())){
+                Utils.restrictedDelete(entry.getKey());
+            }
+        }
+    }
+    //获取工作区的所用文件，检测当前文件是否被跟踪，找到不在当前commit却在目标commit的文件来报错
+    public static boolean judge_not_in_currentCommit_but_in_targerCommit(Commit currentCommit,Commit targetCommit){
+        List<String> inallworkFileName=Utils.plainFilenamesIn(CWD);
+        Stage stage=Stage.load();
+        for(String currentFileName:inallworkFileName){
+            if(!currentCommit.isTracked(currentFileName)&&!stage.isExistInAdd(currentFileName)){
+                if(targetCommit.isTracked(currentFileName)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }
