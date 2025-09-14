@@ -486,8 +486,8 @@ public class Repository  {
                 if(targetHash==null){
                     contentFromTarget="";
                 }else{
-                    Blob currentBlob=Blob.load(targetHash);
-                    byte[] contentFromTargetintwo =currentBlob.get_content();
+                    Blob targetBlob=Blob.load(targetHash);
+                    byte[] contentFromTargetintwo =targetBlob.get_content();
                     contentFromTarget=new String(contentFromTargetintwo,StandardCharsets.UTF_8);
                 }
                 content+=contentFromTarget;
