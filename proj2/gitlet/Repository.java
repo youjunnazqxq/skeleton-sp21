@@ -191,14 +191,15 @@ public class Repository  {
         //获取branches目录下的所有分支
         List<String> allBranch =Utils.plainFilenamesIn(BRANCHES_DIR);
         System.out.println("=== Branches ===");
-        System.out.println(currentBranch.getName());
-        allBranch.remove(currentBranch.getName());
         Collections.sort(allBranch);
         for(String tempBranch:allBranch){
             if(currentBranch.getName().equals(tempBranch)){
+                System.out.println("*"+tempBranch);
+            }else{
                 System.out.println(tempBranch);
             }
         }
+        System.out.println();
         //打印暂存区和删除区
         stage.print();
         /*打印已修改但未暂存
