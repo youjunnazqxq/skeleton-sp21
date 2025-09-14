@@ -479,9 +479,10 @@ public class Repository  {
                     contentFromCurrent="";
                 }else{
                     Blob currentBlob=Blob.load(currentHash);
-                    byte[] contentFromCurrentintwo=currentBlob.get_content();
-                    contentFromCurrent = new String(contentFromCurrentintwo, StandardCharsets.UTF_8);
+                    contentFromCurrent=new String(currentBlob.get_content(),StandardCharsets.UTF_8);
                 }
+                content+=contentFromCurrent;
+                content+="=======\n";
                 if(targetHash==null){
                     contentFromTarget="";
                 }else{
@@ -489,7 +490,8 @@ public class Repository  {
                     byte[] contentFromTargetintwo =currentBlob.get_content();
                     contentFromTarget=new String(contentFromTargetintwo,StandardCharsets.UTF_8);
                 }
-                content+=contentFromCurrent+"\n=======\n"+contentFromTarget+"\n>>>>>>>";
+                content+=contentFromTarget;
+                content+=">>>>>>>";
                 File currentFile =Utils.join(CWD,fileName);
                 Utils.writeContents(currentFile,content);
                 add(fileName);
@@ -500,6 +502,7 @@ public class Repository  {
         Commit mergeCommit =new Commit(message,currentCommit.getCommitHashId(), targetCommit.getCommitHashId());
         currentBranch.changeCommit(mergeCommit.getCommitHashId());
         currentBranch.save();
+        mergeCommit.save();
         stage.clear();
         stage.save();
         if(flag){
