@@ -9,12 +9,12 @@ import java.io.Serializable;
 * */
 public class Blob implements Serializable {
     public static final File OBJECTS_DIR = Utils.join(Repository.GITLET_DIR, "objects");
-    public  static final File BLOBS_FOLDER=Utils.join(OBJECTS_DIR,"blobs");
+    public  static final File BLOBS_FOLDER = Utils.join(OBJECTS_DIR,"blobs");
     private byte[] content;
     private String blob_id;
     public Blob(File current_file){
-        content=Utils.readContents(current_file);
-        blob_id=Utils.sha1(content);
+        content = Utils.readContents(current_file);
+        blob_id = Utils.sha1(content);
     }
     public String get_blob_id(){
         return blob_id;
@@ -23,11 +23,11 @@ public class Blob implements Serializable {
         return content;
     }
     public void save(){
-        File save_blob=Utils.join(BLOBS_FOLDER,blob_id);
+        File save_blob = Utils.join(BLOBS_FOLDER,blob_id);
         Utils.writeObject(save_blob,this);
     }
     public static Blob load(String name){
-        File Blob_file=Utils.join(BLOBS_FOLDER,name);
+        File Blob_file = Utils.join(BLOBS_FOLDER,name);
         return Utils.readObject(Blob_file,Blob.class);
     }
 }

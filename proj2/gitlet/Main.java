@@ -51,7 +51,7 @@ public class Main {
                 repository.log();
                 break;
             case "global-log":
-                repository.global_log();
+                repository.globalLog();
                 break;
             case "find":
                 if(args.length<2){
@@ -64,26 +64,26 @@ public class Main {
                 repository.status();
                 break;
             case "branch":
-                if(args.length<2){
+                if(args.length < 2 ){
                     Utils.printErrorNoExist();
                 }else{
                     repository.branch(args[1]);
                 }
                 break;
             case "rm-branch":
-                if(args.length<2){
+                if(args.length < 2){
                     Utils.printErrorNoExist();
                 }else{
-                    repository.rm_branch(args[1]);
+                    repository.rmBranch(args[1]);
                 }
                 break;
             case "checkout":
                 if (args.length == 3 && args[1].equals("--")) {
-                    repository.check_fileName(args[2]);
+                    repository.checkFileName(args[2]);
                 } else if (args.length == 4 && args[2].equals("--")) {
-                    repository.check_commitId(args[1], args[3]);
+                    repository.checkCommitId(args[1], args[3]);
                 } else if (args.length == 2) {
-                    repository.check_branchName(args[1]);
+                    repository.checkBranchName(args[1]);
                 } else {
                     Utils.printErrorNoExist();
                 }
@@ -96,7 +96,7 @@ public class Main {
                 }
                 break;
             case "merge":
-                if(args.length<2){
+                if(args.length < 2){
                     Utils.printErrorNoExist();
                 }else{
                     repository.merge(args[1]);

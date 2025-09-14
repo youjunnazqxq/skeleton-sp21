@@ -11,8 +11,8 @@ public class Branch implements Serializable {
     private String headCommitHash;
     public static final File BRANCHES_DIR = join(Repository.GITLET_DIR, "branches");
     public Branch (String name,String headCommitHash){
-        this.headCommitHash=headCommitHash;
-        this.name=name;
+        this.headCommitHash = headCommitHash;
+        this.name = name;
     }
     public String getName(){
         return this.name;
@@ -22,14 +22,14 @@ public class Branch implements Serializable {
     }
     //改变当前分支指向的commit
     public void changeCommit(String Hash){
-        headCommitHash=Hash;
+        headCommitHash = Hash;
     }
     public void save(){
-        File saveBranch=Utils.join(BRANCHES_DIR,this.name);
+        File saveBranch = Utils.join(BRANCHES_DIR,this.name);
         Utils.writeObject(saveBranch,this);
     }
     public static Branch load(String name){
-        File saveBranch=Utils.join(BRANCHES_DIR,name);
+        File saveBranch = Utils.join(BRANCHES_DIR,name);
         return Utils.readObject(saveBranch,Branch.class);
     }
 }

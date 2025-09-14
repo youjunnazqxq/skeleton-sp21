@@ -26,8 +26,8 @@ public class Repository  {
     Head  head;
     public Repository(){
         Utils.isGitletExist();
-        stage=Stage.load();
-        head=Head.load();
+        stage = Stage.load();
+        head = Head.load();
     }
     /** The current working directory. */
     public static final File CWD = new File(System.getProperty("user.dir"));
@@ -58,12 +58,12 @@ public class Repository  {
             BLOBS_DIR.mkdirs();
             BRANCHES_DIR.mkdirs();
             STAGES_DIR.mkdirs();
-            Commit inintalCommit=new Commit();
-            Stage initialStage=new Stage();
+            Commit inintalCommit = new Commit();
+            Stage initialStage = new Stage();
             initialStage.save();//保存
             inintalCommit.save();
-            Branch masterBranch=new Branch("master", inintalCommit.getCommitHashId());//创建主分支
-            Head head=new Head(masterBranch.getName());//将head指针指向分支
+            Branch masterBranch = new Branch("master", inintalCommit.getCommitHashId());//创建主分支
+            Head head = new Head(masterBranch.getName());//将head指针指向分支
             masterBranch.save();
             head.save();
         }
@@ -76,18 +76,18 @@ public class Repository  {
     * 如果不一样那么将他加入进暂存区域（这一步add已经将他从删除区中移除）
     * 保存*/
     public  void add(String fileName){
-        File fileToAdd=Utils.findFile(fileName);//找到该文件
+        File fileToAdd = Utils.findFile(fileName);//找到该文件
         if(!fileToAdd.exists()){
             System.out.println("File does not exist.");
             System.exit(0);
         }else{
-            Branch currentBranch=Branch.load(head.getCurrentBranch());//获取当前分支
-            Commit currentCommit=Commit.load(currentBranch.getHeadCommitHash());//获取分支指向的类
-            Blob currentBlob=new Blob(fileToAdd);
-            String currentBlobHash=currentBlob.get_blob_id();
+            Branch currentBranch = Branch.load(head.getCurrentBranch());//获取当前分支
+            Commit currentCommit = Commit.load(currentBranch.getHeadCommitHash());//获取分支指向的类
+            Blob currentBlob = new Blob(fileToAdd);
+            String currentBlobHash = currentBlob.get_blob_id();
             stage.takeOutRemove(fileName);//从待删区中移除
             //判读哈希值是否相等
-            if(!currentCommit.is_equal(fileName,currentBlobHash)){
+            if(!currentCommit.isEqual(fileName,currentBlobHash)){
                 stage.add(fileName,currentBlobHash);
                 stage.save();
                 currentBlob.save();
@@ -106,9 +106,9 @@ public class Repository  {
    * 如果commit已经追踪那么将加入删除区并删除工作目录的那个文件
    */
     public  void rm(String fileName){
-        File removeFile=Utils.findFile(fileName);
-        Branch currentBranch=Branch.load(head.getCurrentBranch());
-        Commit currentCommit=Commit.load(currentBranch.getHeadCommitHash());
+        File removeFile = Utils.findFile(fileName);
+        Branch currentBranch = Branch.load(head.getCurrentBranch());
+        Commit currentCommit = Commit.load(currentBranch.getHeadCommitHash());
         if(!stage.isExistInAdd(fileName)&&!currentCommit.isTracked(fileName)){
             System.out.println("No reason to remove the file.");
             System.exit(0);
@@ -133,9 +133,9 @@ public class Repository  {
             System.out.println("No changes added to the commit.");
             System.exit(0);
         }
-        Branch currentBranch=Branch.load(head.getCurrentBranch());
-        Commit parentCommit=Commit.load(currentBranch.getHeadCommitHash());
-        Commit currentCommit=new Commit(message,parentCommit.getCommitHashId());
+        Branch currentBranch = Branch.load(head.getCurrentBranch());
+        Commit parentCommit = Commit.load(currentBranch.getHeadCommitHash());
+        Commit currentCommit = new Commit(message,parentCommit.getCommitHashId());
         currentBranch.changeCommit(currentCommit.getCommitHashId());
         head.save();
         stage.clear();
@@ -147,35 +147,35 @@ public class Repository  {
     *利用递归沿着第一个父节点来打印commit节点信息直到为null
     */
     public void log(){
-        Branch currentBranch=Branch.load(head.getCurrentBranch());
-        Commit currentCommit=Commit.load(currentBranch.getHeadCommitHash());
-        log_helper(currentCommit.getCommitHashId());
+        Branch currentBranch = Branch.load(head.getCurrentBranch());
+        Commit currentCommit = Commit.load(currentBranch.getHeadCommitHash());
+        logHelper(currentCommit.getCommitHashId());
     }
-    private void log_helper(String currentCommitHash){
-        if(currentCommitHash==null){
+    private void logHelper(String currentCommitHash){
+        if(currentCommitHash == null){
             return;
         }
         Commit currentCommit=Commit.load(currentCommitHash);
         currentCommit.printCommit();
-        log_helper(currentCommit.getFirstParentHash());
+        logHelper(currentCommit.getFirstParentHash());
     }
     /*global-log*/
-    public void global_log(){
-        List<String> allCommitHash=Utils.plainFilenamesIn(COMMITS_DIR);
+    public void globalLog(){
+        List<String> allCommitHash = Utils.plainFilenamesIn(COMMITS_DIR);
         for(String currentCommitHash:allCommitHash){
-            Commit tempCommit=Commit.load(currentCommitHash);
+            Commit tempCommit = Commit.load(currentCommitHash);
             tempCommit.printCommit();
         }
     }
     /*find*/
     public void find(String message){
-        List<String> allCommitHash=Utils.plainFilenamesIn(COMMITS_DIR);
-        boolean findIs=false;
+        List<String> allCommitHash = Utils.plainFilenamesIn(COMMITS_DIR);
+        boolean findIs = false;
         for(String currentCommitHash:allCommitHash){
-            Commit currentCommit=Commit.load(currentCommitHash);
+            Commit currentCommit = Commit.load(currentCommitHash);
             if(currentCommit.getMessage().equals(message)){
                 System.out.println(currentCommit.getCommitHashId());
-                findIs=true;
+                findIs = true;
             }
         }
         if(!findIs){
@@ -187,9 +187,9 @@ public class Repository  {
     public void status(){
         //打印分支的名字
         //获取当前主分支
-        Branch currentBranch=Branch.load(head.getCurrentBranch());
+        Branch currentBranch = Branch.load(head.getCurrentBranch());
         //获取branches目录下的所有分支
-        List<String> allBranch =Utils.plainFilenamesIn(BRANCHES_DIR);
+        List<String> allBranch = Utils.plainFilenamesIn(BRANCHES_DIR);
         System.out.println("=== Branches ===");
         Collections.sort(allBranch);
         for(String tempBranch:allBranch){
@@ -206,18 +206,18 @@ public class Repository  {
         /*打印已修改但未暂存
         *1.在当前commit中被跟跟踪，但在工作区已经被修改但违背暂存 */
         System.out.println("=== Modifications Not Staged For Commit ===");
-        Commit currentCommit =Commit.load(currentBranch.getHeadCommitHash());
+        Commit currentCommit = Commit.load(currentBranch.getHeadCommitHash());
         //获取当前工作区的文件
-        List<String> inWorkFile=Utils.plainFilenamesIn(CWD);
+        List<String> inWorkFile = Utils.plainFilenamesIn(CWD);
         //收集被跟踪但没有暂存的文件
-        Set<String> modiButNotCommit=new TreeSet<>();
+        Set<String> modiButNotCommit = new TreeSet<>();
         //遍历工作区的文件
         for(String workFileName:inWorkFile){
             File workFile=Utils.findFile(workFileName);
             //判断有没有被commit跟踪
             if(currentCommit.isTracked(workFileName)){
                 //判断工作区的文件和commit跟踪的文件是否相同
-                if(!currentCommit.is_equal(workFileName,Utils.getHash(workFile))){
+                if(!currentCommit.isEqual(workFileName,Utils.getHash(workFile))){
                     if(!stage.isExistInAdd(workFileName)){
                         modiButNotCommit.add(workFileName+"(modified)");
                     }
@@ -227,10 +227,10 @@ public class Repository  {
         /*在暂存区有但
         * 1 工作区的版本不一样
         * 2 在工作区中被删除了*/
-        Map <String,String> fileInstage=stage.getStageForAdd();
+        Map <String,String> fileInstage = stage.getStageForAdd();
         for(Map.Entry<String,String> entry:fileInstage.entrySet()){
             if(inWorkFile.contains(entry.getKey())){
-                File currentFile=Utils.findFile(entry.getKey());
+                File currentFile = Utils.findFile(entry.getKey());
                 if(!stage.isEquel(entry.getKey(),Utils.getHash(currentFile))){
                     modiButNotCommit.add(entry.getKey()+"(modified)");
                 }
@@ -249,7 +249,7 @@ public class Repository  {
         }
         System.out.println();
         //获取未被跟踪的文件
-        Set<String> unstrackedFile=new TreeSet<>();
+        Set<String> unstrackedFile = new TreeSet<>();
         System.out.println("=== Untracked Files ===");
         for(String currentfileName:inWorkFile){
             if(!stage.isExistInAdd(currentfileName)){
@@ -265,19 +265,19 @@ public class Repository  {
     }
     /*branch*/
     public void branch(String newBranchName){
-        File newBranchFile =Utils.join(BRANCHES_DIR,newBranchName);
+        File newBranchFile = Utils.join(BRANCHES_DIR,newBranchName);
         if(newBranchFile.exists()){
             System.out.println("A branch with that name already exists.");
         }else{
-            Branch currentBranch=Branch.load(head.getCurrentBranch());
-            Branch newBranch=new Branch(newBranchName, currentBranch.getHeadCommitHash());
+            Branch currentBranch = Branch.load(head.getCurrentBranch());
+            Branch newBranch = new Branch(newBranchName, currentBranch.getHeadCommitHash());
             newBranch.save();
         }
     }
     /*rm-branch*/
-    public void rm_branch(String removeBranchName){
-        File removeBranch=Utils.join(BRANCHES_DIR,removeBranchName);
-        Branch currentBranch=Branch.load(head.getCurrentBranch());
+    public void rmBranch(String removeBranchName){
+        File removeBranch = Utils.join(BRANCHES_DIR,removeBranchName);
+        Branch currentBranch = Branch.load(head.getCurrentBranch());
         if(!removeBranch.exists()){
             System.out.println("A branch with that name does not exist.");
             return;
@@ -290,32 +290,32 @@ public class Repository  {
     }
     /*checkout*/
     /*第一种情况，获取当前的commit，将其放在工作目录中，如果已经存在则替代他*/
-    public void check_fileName(String fileName){
+    public void checkFileName(String fileName){
         Branch currentBranch = Branch.load(head.getCurrentBranch());
-        Commit currentCommit =Commit.load(currentBranch.getHeadCommitHash());
+        Commit currentCommit = Commit.load(currentBranch.getHeadCommitHash());
         //判断文件是否存在，如果存在就找到对应的哈希值
         String blobHash;
         if(currentCommit.isTracked(fileName)){
-             blobHash= currentCommit.getBlobHash(fileName);
+             blobHash = currentCommit.getBlobHash(fileName);
         }else{
             System.out.println("File does not exist in that commit.");
             return;
         }
-        File inWorkFile =Utils.join(CWD,fileName);
-        Blob currentBlob=Blob.load(blobHash);
+        File inWorkFile = Utils.join(CWD,fileName);
+        Blob currentBlob = Blob.load(blobHash);
         Utils.writeContents(inWorkFile,currentBlob.get_content());
     }
     /*第二种情况，获取指定commit版本中的文件，然后保存到当前的目录中*/
-    public void check_commitId(String shortId,String fileName){
-        String commitId=Utils.findFullCommited(shortId);
+    public void checkCommitId(String shortId,String fileName){
+        String commitId = Utils.findFullCommited(shortId);
         if(commitId==null){
             System.out.println("No commit with that id exists.");
             return ;
         }else{
-            Commit currentCommit =Commit.load(commitId);
+            Commit currentCommit = Commit.load(commitId);
             if(currentCommit.isTracked(fileName)){
-                Blob currentFileBlob=Blob.load(currentCommit.getBlobHash(fileName));
-                File inWorkFile =Utils.join(CWD,fileName);
+                Blob currentFileBlob = Blob.load(currentCommit.getBlobHash(fileName));
+                File inWorkFile = Utils.join(CWD,fileName);
                 Utils.writeContents(inWorkFile,currentFileBlob.get_content());
             }else{
                 System.out.println("File does not exist in that commit.");
@@ -324,20 +324,20 @@ public class Repository  {
         }
     }
     /*第三种情况，传入的是分支*/
-    public void check_branchName(String branchName){
+    public void checkBranchName(String branchName){
         if(!Utils.isBranchExist(branchName)){
             System.out.println("No such branch exists.");
             return ;
         }else{
-            Branch currentBrach=Branch.load(head.getCurrentBranch());
-            Branch targetBranch=Branch.load(branchName);
-            Commit currentCommit=Commit.load(currentBrach.getHeadCommitHash());
-            Commit targetCommit=Commit.load(targetBranch.getHeadCommitHash());
+            Branch currentBrach = Branch.load(head.getCurrentBranch());
+            Branch targetBranch = Branch.load(branchName);
+            Commit currentCommit = Commit.load(currentBrach.getHeadCommitHash());
+            Commit targetCommit = Commit.load(targetBranch.getHeadCommitHash());
             if(currentBrach.getName().equals(branchName)){
                 System.out.println("No need to checkout the current branch.");
             }else{
                 /*获取当前工作目录的所有文件,先检测当前文件是否被跟踪（不在commit和stageAdd中）找到不在当前commit却在目标comit的文件来报错*/
-                if(Utils.judge_not_in_currentCommit_but_in_targerCommit(currentCommit,targetCommit)){
+                if(judgeNotInCurrentCommitButInTargerCommit(currentCommit,targetCommit)){
                     System.out.println("There is an untracked file in the way; delete it,or add and commit it first.");
                     return ;
                 }
@@ -356,15 +356,15 @@ public class Repository  {
     }
     //reset
     public void reset(String shortedHash){
-        String targetCommitHash=Utils.findFullCommited(shortedHash);
-        if(targetCommitHash==null){
+        String targetCommitHash = Utils.findFullCommited(shortedHash);
+        if(targetCommitHash == null){
             System.out.println("No commit with that id exists.");
             return ;
         }
-        Branch currentBranch=Branch.load(head.getCurrentBranch());
-        Commit currentCommit=Commit.load(currentBranch.getHeadCommitHash());
-        Commit targetCommit=Commit.load(targetCommitHash);
-        if(Utils.judge_not_in_currentCommit_but_in_targerCommit(currentCommit,targetCommit)){
+        Branch currentBranch = Branch.load(head.getCurrentBranch());
+        Commit currentCommit = Commit.load(currentBranch.getHeadCommitHash());
+        Commit targetCommit = Commit.load(targetCommitHash);
+        if(Utils.judgeNotInCurrentCommitButInTargerCommit(currentCommit,targetCommit)){
             System.out.println("There is an untracked file in the way; delete it,or add and commit it first.");
             return ;
         }
@@ -397,32 +397,32 @@ public class Repository  {
             System.out.println("A branch with that name does not exist.");
             return ;
         }
-        Branch currentBranch=Branch.load(head.getCurrentBranch());
-        Branch  targetBranch=Branch.load(targetBranchName);
-        Commit currentCommit=Commit.load(currentBranch.getHeadCommitHash());
-        Commit targetCommit=Commit.load(targetBranch.getHeadCommitHash());
-        String splitCommitHash=null;
+        Branch currentBranch = Branch.load(head.getCurrentBranch());
+        Branch  targetBranch = Branch.load(targetBranchName);
+        Commit currentCommit = Commit.load(currentBranch.getHeadCommitHash());
+        Commit targetCommit = Commit.load(targetBranch.getHeadCommitHash());
+        String splitCommitHash = null;
         //检查是否与自身合并
         if(targetBranchName.equals(currentBranch.getName())){
             System.out.println("Cannot merge a branch with itself.");
             return ;
         }
         //检查是否有未跟踪的文件
-        if(Utils.judge_not_in_currentCommit_but_in_targerCommit(currentCommit,targetCommit)){
+        if(Utils.judgeNotInCurrentCommitButInTargerCommit(currentCommit,targetCommit)){
             System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
             return;
         }
         //获取当前current中所有的父代
-        Set<String> allCurrentParentCommitHash=new HashSet<>();
+        Set<String> allCurrentParentCommitHash = new HashSet<>();
         findParentHelp(currentCommit.getCommitHashId(),allCurrentParentCommitHash);
         //用BFS遍历targetCommit
-        Set<String> visetedHash=new HashSet<>();
-        Queue<String> queue=new LinkedList<>();
+        Set<String> visetedHash = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
         queue.add(targetCommit.getCommitHashId());
         while(!queue.isEmpty()){
-            String currentCommitHashFromQueue= queue.poll();
+            String currentCommitHashFromQueue = queue.poll();
             if(allCurrentParentCommitHash.contains(currentCommitHashFromQueue)){
-                splitCommitHash=currentCommitHashFromQueue;
+                splitCommitHash = currentCommitHashFromQueue;
                 break;
             }
             if(visetedHash.contains(currentCommitHashFromQueue)){
@@ -438,33 +438,33 @@ public class Repository  {
                 queue.add(currentCommitFromQueue.getSecondParentHash());
             }
         }
-        Commit spiltCommmit=Commit.load(splitCommitHash);
+        Commit spiltCommmit = Commit.load(splitCommitHash);
         //最简单的两种情况 当前targetcommit与splitcommit相同打印退出   currentcommit与其相同用checkout回到target
         if(targetCommit.getCommitHashId().equals(splitCommitHash)){
             System.out.println("Given branch is an ancestor of the current branch.");
             return;
         }
         if(currentCommit.getCommitHashId().equals(splitCommitHash)){
-            check_branchName(targetBranchName);
+            checkBranchName(targetBranchName);
             System.out.println("Current branch fast-forwarded.");
             return;
         }
         //制作一份包含三个commit所有的文件名字的hashSet，以便后来比较
-        Set<String> allFileName=new HashSet<>();
+        Set<String> allFileName = new HashSet<>();
         targetCommit.putAllInSet(allFileName);
         currentCommit.putAllInSet(allFileName);
         spiltCommmit.putAllInSet(allFileName);
-        boolean flag=false;
+        boolean flag = false;
         for(String fileName:allFileName){
-            String spiltHash=spiltCommmit.getBlobHash(fileName);
-            String currentHash=currentCommit.getBlobHash(fileName);
-            String targetHash=targetCommit.getBlobHash(fileName);
+            String spiltHash = spiltCommmit.getBlobHash(fileName);
+            String currentHash = currentCommit.getBlobHash(fileName);
+            String targetHash = targetCommit.getBlobHash(fileName);
             if(Objects.equals(currentHash,targetHash)){
                 continue;
             }else if(Objects.equals(spiltHash,currentHash)){
-                if(targetHash!=null){
-                    File changeFile=Utils.join(CWD,fileName);
-                    Blob changeBlob =Blob.load(targetHash);
+                if(targetHash != null){
+                    File changeFile = Utils.join(CWD,fileName);
+                    Blob changeBlob = Blob.load(targetHash);
                     Utils.writeContents(changeFile,changeBlob.get_content());
                     stage.add(fileName,targetHash);
                 }else{
@@ -475,34 +475,34 @@ public class Repository  {
                 continue;
             }else{
                 flag=true;
-                String content ="<<<<<<< HEAD\n";
+                String content = "<<<<<<< HEAD\n";
                 String contentFromCurrent;
                 String contentFromTarget;
-                if(currentHash==null){
-                    contentFromCurrent="";
+                if(currentHash == null){
+                    contentFromCurrent = "";
                 }else{
                     Blob currentBlob=Blob.load(currentHash);
-                    contentFromCurrent=new String(currentBlob.get_content(),StandardCharsets.UTF_8);
+                    contentFromCurrent = new String(currentBlob.get_content(),StandardCharsets.UTF_8);
                 }
-                content+=contentFromCurrent;
-                content+="=======\n";
-                if(targetHash==null){
-                    contentFromTarget="";
+                content += contentFromCurrent;
+                content += "=======\n";
+                if(targetHash == null){
+                    contentFromTarget = "";
                 }else{
-                    Blob targetBlob=Blob.load(targetHash);
-                    byte[] contentFromTargetintwo =targetBlob.get_content();
-                    contentFromTarget=new String(contentFromTargetintwo,StandardCharsets.UTF_8);
+                    Blob targetBlob = Blob.load(targetHash);
+                    byte[] contentFromTargetintwo = targetBlob.get_content();
+                    contentFromTarget = new String(contentFromTargetintwo,StandardCharsets.UTF_8);
                 }
-                content+=contentFromTarget;
-                content+=">>>>>>>\n";
-                File currentFile =Utils.join(CWD,fileName);
+                content += contentFromTarget;
+                content += ">>>>>>>\n";
+                File currentFile = Utils.join(CWD,fileName);
                 Utils.writeContents(currentFile,content);
                 add(fileName);
             }
             }
         stage.save();
-        String message="Merged "+targetBranch.getName()+" into "+currentBranch.getName()+".";
-        Commit mergeCommit =new Commit(message,currentCommit.getCommitHashId(), targetCommit.getCommitHashId());
+        String message = "Merged "+targetBranch.getName()+" into "+currentBranch.getName()+".";
+        Commit mergeCommit = new Commit(message,currentCommit.getCommitHashId(), targetCommit.getCommitHashId());
         currentBranch.changeCommit(mergeCommit.getCommitHashId());
         currentBranch.save();
         mergeCommit.save();
@@ -514,14 +514,14 @@ public class Repository  {
     }
     //用DFS获取所有的父代
     private void findParentHelp(String currentCommitHash,Set<String> allCurrentParentCommitHash){
-        if(currentCommitHash==null){
+        if(currentCommitHash == null){
             return ;
         }
         if(allCurrentParentCommitHash.contains(currentCommitHash)){
             return;
         }
         allCurrentParentCommitHash.add(currentCommitHash);
-        Commit currentCommit =Commit.load(currentCommitHash);
+        Commit currentCommit = Commit.load(currentCommitHash);
         findParentHelp(currentCommit.getFirstParentHash(),allCurrentParentCommitHash);
         if(currentCommit.isMergeCommit()){
             findParentHelp(currentCommit.getSecondParentHash(),allCurrentParentCommitHash);

@@ -37,11 +37,11 @@ public class Commit implements Serializable {
     public static final File STAGES_DIR = join(GITLET_DIR, "Stages");
     //用来构建第一个commit提交
     public Commit(){
-        this.message="initial commit";
-        this.time=new Date(0);
-        this.firstParentHash=null;
-        this.blobHash=new TreeMap<>();
-        this.commitId=getCommitHash();
+        this.message = "initial commit";
+        this.time = new Date(0);
+        this.firstParentHash = null;
+        this.blobHash = new TreeMap<>();
+        this.commitId = getCommitHash();
     }
     //用来构建常态的提交方式
     public Commit (String message,String firstParentHash) {
@@ -57,7 +57,7 @@ public class Commit implements Serializable {
                 this.blobHash.putAll(firstParentBlob);
             }
         }
-        this.secondParentHash=null;//TODO
+        this.secondParentHash = null;//TODO
         Stage stage = Stage.load();
         //从暂存区添加文件
         for(Map.Entry<String,String> entry:stage.getStageForAdd().entrySet()){
@@ -67,7 +67,7 @@ public class Commit implements Serializable {
         for(String removeFile:stage.getStageForRemove()){
             this.blobHash.remove(removeFile);
         }
-        this.commitId=getCommitHash();
+        this.commitId = getCommitHash();
     }
     //用于构建合并commit
     public Commit(String message,String firstParentHash,String secondParentHash){
@@ -92,14 +92,14 @@ public class Commit implements Serializable {
         for(String removeFile:stage.getStageForRemove()){
             this.blobHash.remove(removeFile);
         }
-        this.commitId=getCommitHash();
+        this.commitId = getCommitHash();
     }
 
 
     //判断文件是否发生变化
-    public boolean is_equal(String fileName,String blobHash){
-        String tempHash=this.blobHash.get(fileName);
-        if(tempHash==null){
+    public boolean isEqual(String fileName,String blobHash){
+        String tempHash = this.blobHash.get(fileName);
+        if(tempHash == null){
             return false;
         }
         return tempHash.equals(blobHash);
@@ -110,13 +110,13 @@ public class Commit implements Serializable {
     }
     //获取commit的哈希值
     private String getCommitHash(){
-        List<Object> contentsToHash= new ArrayList<>();
+        List<Object> contentsToHash = new ArrayList<>();
         contentsToHash.add(this.message);
         contentsToHash.add(this.time.toString());
-        if(this.firstParentHash!=null){
+        if(this.firstParentHash != null){
             contentsToHash.add(firstParentHash);
         }
-        if(this.secondParentHash!=null){
+        if(this.secondParentHash != null){
             contentsToHash.add(secondParentHash);
         }
         contentsToHash.add(blobHash.toString());
@@ -128,7 +128,7 @@ public class Commit implements Serializable {
     }
     //序列化保存
     public void save(){
-        File saveCommit=Utils.join(COMMITS_DIR,this.commitId);
+        File saveCommit = Utils.join(COMMITS_DIR,this.commitId);
         Utils.writeObject(saveCommit,this);
     }
     //反序列话读取
@@ -148,11 +148,11 @@ public class Commit implements Serializable {
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.ENGLISH);
         String formattedDate = sdf.format(this.time);
         System.out.println("===");
-        System.out.println("commit "+this.commitId);
-        if(this.secondParentHash!=null){
-            String parent_1=this.firstParentHash.substring(0,7);
-            String parent_2=this.secondParentHash.substring(0,7);
-            System.out.println("Merge: "+parent_1 +" "+parent_2);
+        System.out.println("commit " + this.commitId);
+        if(this.secondParentHash != null){
+            String parent_1 = this.firstParentHash.substring(0,7);
+            String parent_2 = this.secondParentHash.substring(0,7);
+            System.out.println("Merge: " + parent_1 + " " + parent_2);
         }
         System.out.println("Date: "+formattedDate);
         System.out.println(this.message);
@@ -177,15 +177,15 @@ public class Commit implements Serializable {
     //将所存在commit中的blob放在工作目录中
     public void putInWork(){
         for(Map.Entry<String,String> entry:this.blobHash.entrySet()){
-            String curretrnBlobHash=entry.getValue();
-            Blob currentBlob=Blob.load(curretrnBlobHash);
-            File addWorkFile=Utils.join(CWD,entry.getKey());
+            String curretrnBlobHash = entry.getValue();
+            Blob currentBlob = Blob.load(curretrnBlobHash);
+            File addWorkFile = Utils.join(CWD,entry.getKey());
             Utils.writeContents(addWorkFile,currentBlob.get_content());
         }
     }
     //判断是否为合并节点
     public boolean isMergeCommit(){
-        if(secondParentHash==null){
+        if(secondParentHash == null){
             return false;
         }else{
             return true;
