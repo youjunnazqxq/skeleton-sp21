@@ -267,7 +267,7 @@ public class Repository  {
     public void branch(String newBranchName){
         File newBranchFile =Utils.join(BRANCHES_DIR,newBranchName);
         if(newBranchFile.exists()){
-            System.out.println("A branch with name already exists.");
+            System.out.println("A branch with that name already exists.");
         }else{
             Branch currentBranch=Branch.load(head.getCurrentBranch());
             Branch newBranch=new Branch(newBranchName, currentBranch.getHeadCommitHash());
@@ -286,7 +286,7 @@ public class Repository  {
             System.out.println("Cannot remove the current branch.");
             return ;
         }
-        Utils.restrictedDelete(removeBranch);
+        removeBranch.delete();
     }
     /*checkout*/
     /*第一种情况，获取当前的commit，将其放在工作目录中，如果已经存在则替代他*/

@@ -76,6 +76,13 @@ public class Commit implements Serializable {
         this.secondParentHash=secondParentHash;
         this.blobHash = new TreeMap<>();
         this.time = new Date();
+        if (firstParentHash != null) {
+            Commit firstParentCommit = load(firstParentHash);
+            Map<String, String> firstParentBlob = firstParentCommit.getBlob();
+            if (firstParentBlob != null) {
+                this.blobHash.putAll(firstParentBlob);
+            }
+        }
         Stage stage = Stage.load();
         //从暂存区添加文件
         for(Map.Entry<String,String> entry:stage.getStageForAdd().entrySet()){
