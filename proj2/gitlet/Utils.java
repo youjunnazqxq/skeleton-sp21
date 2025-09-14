@@ -295,5 +295,18 @@ class Utils {
         }
         return false;
     }
+    //根据已知的短id找到完整的id
+    public static String findFullCommited(String shorted){
+        List<String> allCommit =Utils.plainFilenamesIn(COMMITS_DIR);
+        if(allCommit==null){
+            return null;
+        }
+        for(String fullid:allCommit){
+            if(fullid.startsWith(shorted)){
+                return fullid;
+            }
+        }
+        return null;
+    }
 
 }

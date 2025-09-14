@@ -25,9 +25,9 @@ public class Repository  {
     Stage stage;
     Head  head;
     public Repository(){
+        Utils.isGitletExist();
         stage=Stage.load();
         head=Head.load();
-        Utils.isGitletExist();
     }
     /** The current working directory. */
     public static final File CWD = new File(System.getProperty("user.dir"));
@@ -306,7 +306,8 @@ public class Repository  {
         Utils.writeContents(inWorkFile,currentBlob.get_content());
     }
     /*第二种情况，获取指定commit版本中的文件，然后保存到当前的目录中*/
-    public void check_commitId(String commitId,String fileName){
+    public void check_commitId(String shortId,String fileName){
+        String commitId=Utils.findFullCommited(shortId);
         if(!Utils.isCommitExist(commitId)){
             System.out.println("No commit with that id exists.");
             return ;
@@ -354,7 +355,8 @@ public class Repository  {
         }
     }
     //reset
-    public void reset(String targetCommitHash){
+    public void reset(String shortedHash){
+        String targetCommitHash=Utils.findFullCommited(shortedHash);
         if(!Utils.isCommitExist(targetCommitHash)){
             System.out.println("No commit with that id exists.");
             return ;
@@ -408,6 +410,7 @@ public class Repository  {
         //检查是否有未跟踪的文件
         if(Utils.judge_not_in_currentCommit_but_in_targerCommit(currentCommit,targetCommit)){
             System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            return;
         }
         //获取当前current中所有的父代
         Set<String> allCurrentParentCommitHash=new HashSet<>();
