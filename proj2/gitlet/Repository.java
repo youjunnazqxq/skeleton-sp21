@@ -472,14 +472,14 @@ public class Repository  {
                 String contentFromCurrent;
                 String contentFromTarget;
                 if(currentHash==null){
-                    contentFromCurrent=" ";
+                    contentFromCurrent="";
                 }else{
                     Blob currentBlob=Blob.load(currentHash);
                     byte[] contentFromCurrentintwo=currentBlob.get_content();
                     contentFromCurrent = new String(contentFromCurrentintwo, StandardCharsets.UTF_8);
                 }
                 if(targetHash==null){
-                    contentFromTarget=" ";
+                    contentFromTarget="";
                 }else{
                     Blob currentBlob=Blob.load(targetHash);
                     byte[] contentFromTargetintwo =currentBlob.get_content();
