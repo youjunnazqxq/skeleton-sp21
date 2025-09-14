@@ -491,7 +491,7 @@ public class Repository  {
                     contentFromTarget=new String(contentFromTargetintwo,StandardCharsets.UTF_8);
                 }
                 content+=contentFromTarget;
-                content+=">>>>>>>";
+                content+=">>>>>>>\n";
                 File currentFile =Utils.join(CWD,fileName);
                 Utils.writeContents(currentFile,content);
                 add(fileName);
