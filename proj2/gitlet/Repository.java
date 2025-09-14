@@ -308,7 +308,7 @@ public class Repository  {
     /*第二种情况，获取指定commit版本中的文件，然后保存到当前的目录中*/
     public void check_commitId(String shortId,String fileName){
         String commitId=Utils.findFullCommited(shortId);
-        if(!Utils.isCommitExist(commitId)){
+        if(commitId==null){
             System.out.println("No commit with that id exists.");
             return ;
         }else{
@@ -357,7 +357,7 @@ public class Repository  {
     //reset
     public void reset(String shortedHash){
         String targetCommitHash=Utils.findFullCommited(shortedHash);
-        if(!Utils.isCommitExist(targetCommitHash)){
+        if(targetCommitHash==null){
             System.out.println("No commit with that id exists.");
             return ;
         }
