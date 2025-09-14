@@ -150,7 +150,9 @@ public class Commit implements Serializable {
         System.out.println("===");
         System.out.println("commit "+this.commitId);
         if(this.secondParentHash!=null){
-
+            String parent_1=this.firstParentHash.substring(0,7);
+            String parent_2=this.secondParentHash.substring(0,7);
+            System.out.println("Merge: "+parent_1 +" "+parent_2);
         }
         System.out.println("Date: "+formattedDate);
         System.out.println(this.message);
@@ -195,5 +197,4 @@ public class Commit implements Serializable {
             allFileName.add(entry.getKey());
         }
     }
-
 }
