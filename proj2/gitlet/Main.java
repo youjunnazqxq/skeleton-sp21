@@ -78,8 +78,6 @@ public class Main {
                 }
                 break;
             case "checkout":
-            case "checkout":
-                // 严格匹配三种合法形式
                 if (args.length == 3 && args[1].equals("--")) {
                     repository.check_fileName(args[2]);
                 } else if (args.length == 4 && args[2].equals("--")) {
@@ -88,6 +86,7 @@ public class Main {
                     repository.check_branchName(args[1]);
                 } else {
                     Utils.printErrorNoExist();
+                }
                 break;
             case "reset":
                 if(args.length<2){
