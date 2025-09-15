@@ -129,6 +129,11 @@ public class Commit implements Serializable {
     //序列化保存
     public void save(){
         File saveCommit = Utils.join(COMMITS_DIR,this.commitId);
+        File saveComitParent=saveCommit.getParentFile();
+        if(!saveComitParent.exists())
+        {
+            saveComitParent.mkdirs();
+        }
         Utils.writeObject(saveCommit,this);
     }
     //反序列话读取

@@ -24,9 +24,14 @@ public class Branch implements Serializable {
     public void changeCommit(String Hash){
         headCommitHash = Hash;
     }
-    public void save(){
-        File saveBranch = Utils.join(BRANCHES_DIR,this.name);
-        Utils.writeObject(saveBranch,this);
+    public void save() {
+        File saveBranch = Utils.join(BRANCHES_DIR, this.name);
+        // 关键修复：创建父目录（支持多级目录，如R1）
+        File parentDir = saveBranch.getParentFile();
+        if (!parentDir.exists()) {
+            parentDir.mkdirs(); // mkdirs() 会创建所有不存在的父目录
+        }
+        Utils.writeObject(saveBranch, this);
     }
     public static Branch load(String name){
         File saveBranch = Utils.join(BRANCHES_DIR,name);
