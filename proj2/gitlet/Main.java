@@ -108,18 +108,35 @@ public class Main {
                 }else{
                     repository.addRemote(args[1],args[2]);
                 }
+                break;
             case "rm-remote":
                 if(args.length<2){
                     Utils.printErrorNoExist();
                 }else{
                  repository.rmRemote(args[1]);
                 }
+                break;
             case "fetch":
                 if(args.length<3){
                     Utils.printErrorNoExist();
                 }else{
                     repository.fetch(args[1],args[2]);
                 }
+                break;
+            case "push":
+                if(args.length<3){
+                    Utils.printErrorNoExist();
+                }else{
+                    repository.push(args[1],args[2]);
+                }
+                break;
+            case "pull":
+                if(args.length<3){
+                    Utils.printErrorNoExist();;
+                }else{
+                    repository.pull(args[1],args[2]);
+                }
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0); //

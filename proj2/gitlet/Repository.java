@@ -624,7 +624,79 @@ public class Repository  {
         String currentTrackingBranchName=LocalTrackingBranchName.replace("/",File.separator);
         Branch newBranch =new Branch(currentTrackingBranchName,remoteCommit.getCommitHashId());
         newBranch.save();
+        System.setProperty("user.dir",originalCwdPath);
         }
-
+        //push
+    public void push(String remoteName,String targetBranchName){
+        String orignalDir=System.getProperty("user.dir");
+        File remoteFile=Utils.join(GITLET_DIR,remoteName);
+        if(!remoteFile.exists()){
+            System.out.println("Remote directory not found.");
+            return;
+        }
+        Remote remoteStage=Remote.load(remoteName);
+        String remotePath=remoteStage.getPath();
+        //得到头提交
+        System.setProperty("user.dir",remotePath);
+        Head remoteHead=Head.load();
+        Branch remoteBranch =Branch.load(remoteHead.getCurrentBranch());
+        Commit remoteCommit =Commit.load(remoteBranch.getHeadCommitHash());
+        String remoteCommitHash=remoteCommit.getCommitHashId();
+        //得到最新的提交
+        Set<String> allCopyCommit=new HashSet<>();
+        System.setProperty("user.dir",orignalDir);
+        Branch localBranch=Branch.load(head.getCurrentBranch());
+        findParentHelp(localBranch.getHeadCommitHash(),allCopyCommit);
+        for(String commitHashToCopy:allCopyCommit){
+            System.setProperty("user.dir",remotePath);
+            File remoteCommitFile =Utils.join(COMMITS_DIR,commitHashToCopy);
+            if(remoteCommitFile.exists()){
+                continue;
+            }
+            System.setProperty("user.dir",orignalDir);
+            File LocalCommitFile =Utils.join(COMMITS_DIR,commitHashToCopy);
+            try{
+                Files.copy(LocalCommitFile.toPath(),remoteCommitFile.toPath());
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+        Commit commitToCopy=Commit.load(remoteCommitHash);
+        Map<String,String> allBlobHash=commitToCopy.getBlob();
+        for(Map.Entry<String,String> entry:allBlobHash.entrySet()){
+            System.setProperty("user.diy",remotePath);
+            File remoteBlobFile=Utils.join(BLOBS_DIR,entry.getValue());
+            if(remoteBlobFile.exists()){
+                continue;
+            }
+            System.setProperty("user.dir",orignalDir);
+            File localBlobFile=Utils.join(BLOBS_DIR,entry.getValue());
+            try{
+                Files.copy(localBlobFile.toPath(),remoteBlobFile.toPath());
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+        System.setProperty("user.dir",remotePath);
+        if(Utils.isBranchExist(targetBranchName)){
+            Branch targetBranch=Branch.load(targetBranchName);
+            targetBranch.changeCommit(localBranch.getHeadCommitHash());
+            targetBranch.save();
+            remoteHead.changeCurrentBranch(targetBranch.getName());
+            remoteHead.save();
+        }else{
+            Branch targetBranch =new Branch(targetBranchName,localBranch.getHeadCommitHash());
+            targetBranch.save();
+            remoteHead.changeCurrentBranch(targetBranch.getName());
+            remoteHead.save();
+        }
+        System.setProperty("user.dir",orignalDir);
     }
+    //pull
+    public void pull(String remoteName,String remoteBranchName){
+        fetch(remoteName,remoteBranchName);
+        merge(remoteBranchName);
+    }
+    }
+
 
