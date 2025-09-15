@@ -102,6 +102,24 @@ public class Main {
                     repository.merge(args[1]);
                 }
                 break;
+            case "add-remote":
+                if(args.length<3){
+                    Utils.printErrorNoExist();
+                }else{
+                    repository.addRemote(args[1],args[2]);
+                }
+            case "rm-remote":
+                if(args.length<2){
+                    Utils.printErrorNoExist();
+                }else{
+                 repository.rmRemote(args[1]);
+                }
+            case "fetch":
+                if(args.length<3){
+                    Utils.printErrorNoExist();
+                }else{
+                    repository.fetch(args[1],args[2]);
+                }
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0); //

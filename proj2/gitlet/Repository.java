@@ -1,7 +1,9 @@
 package gitlet;
 import javax.sql.rowset.spi.SyncResolver;
 import java.io.File;
+import java.io.IOException;
 import java.io.SyncFailedException;
+import java.nio.file.Files;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
 import static gitlet.Utils.*;
@@ -41,7 +43,8 @@ public class Repository  {
     public static final File BRANCHES_DIR = join(GITLET_DIR, "branches");
     // 暂存区
     public static final File STAGES_DIR = join(GITLET_DIR, "Stages");
-    /* TODO: fill in the rest of this class. */
+    //远程仓库
+    public static final File REMOTES_DIR=join(GITLET_DIR,"remotes");
 
     /*init：
     * 初始化仓库
@@ -58,6 +61,7 @@ public class Repository  {
             BLOBS_DIR.mkdirs();
             BRANCHES_DIR.mkdirs();
             STAGES_DIR.mkdirs();
+            REMOTES_DIR.mkdirs();
             Commit inintalCommit = new Commit();
             Stage initialStage = new Stage();
             initialStage.save();//保存
@@ -416,28 +420,7 @@ public class Repository  {
         Set<String> allCurrentParentCommitHash = new HashSet<>();
         findParentHelp(currentCommit.getCommitHashId(),allCurrentParentCommitHash);
         //用BFS遍历targetCommit
-        Set<String> visetedHash = new HashSet<>();
-        Queue<String> queue = new LinkedList<>();
-        queue.add(targetCommit.getCommitHashId());
-        while(!queue.isEmpty()){
-            String currentCommitHashFromQueue = queue.poll();
-            if(allCurrentParentCommitHash.contains(currentCommitHashFromQueue)){
-                splitCommitHash = currentCommitHashFromQueue;
-                break;
-            }
-            if(visetedHash.contains(currentCommitHashFromQueue)){
-                continue;
-            }
-            visetedHash.add(currentCommitHashFromQueue);
-            Commit currentCommitFromQueue=Commit.load(currentCommitHashFromQueue);
-            String firstParentCommitHash=currentCommitFromQueue.getFirstParentHash();
-            if(firstParentCommitHash!=null){
-               queue.add(firstParentCommitHash);
-           }
-            if(currentCommitFromQueue.isMergeCommit()){
-                queue.add(currentCommitFromQueue.getSecondParentHash());
-            }
-        }
+        splitCommitHash=findParentHelpInBfS(allCurrentParentCommitHash,targetCommit.getCommitHashId());
         Commit spiltCommmit = Commit.load(splitCommitHash);
         //最简单的两种情况 当前targetcommit与splitcommit相同打印退出   currentcommit与其相同用checkout回到target
         if(targetCommit.getCommitHashId().equals(splitCommitHash)){
@@ -512,6 +495,31 @@ public class Repository  {
             System.out.println("Encountered a merge conflict.");
         }
     }
+    //用BFS找到父代
+    private String  findParentHelpInBfS(Set<String> allCommitHashInRemote,String currentHashID){
+        Set<String> visetedHash = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
+        queue.add(currentHashID);
+        while(!queue.isEmpty()){
+            String currentCommitHashFromQueue = queue.poll();
+            if(allCommitHashInRemote.contains(currentCommitHashFromQueue)){
+                return  currentCommitHashFromQueue;
+            }
+            if(visetedHash.contains(currentCommitHashFromQueue)){
+                continue;
+            }
+            visetedHash.add(currentCommitHashFromQueue);
+            Commit currentCommitFromQueue=Commit.load(currentCommitHashFromQueue);
+            String firstParentCommitHash=currentCommitFromQueue.getFirstParentHash();
+            if(firstParentCommitHash!=null){
+                queue.add(firstParentCommitHash);
+            }
+            if(currentCommitFromQueue.isMergeCommit()){
+                queue.add(currentCommitFromQueue.getSecondParentHash());
+            }
+        }
+        return null;
+    }
     //用DFS获取所有的父代
     private void findParentHelp(String currentCommitHash,Set<String> allCurrentParentCommitHash){
         if(currentCommitHash == null){
@@ -525,6 +533,96 @@ public class Repository  {
         findParentHelp(currentCommit.getFirstParentHash(),allCurrentParentCommitHash);
         if(currentCommit.isMergeCommit()){
             findParentHelp(currentCommit.getSecondParentHash(),allCurrentParentCommitHash);
+        }
+
+    }
+    //add_remote
+    public void addRemote(String name,String path){
+        if(Utils.isRemoteExist(name)){
+            System.out.println("A remote with that name already exists.");
+            return;
+        }
+        String correntedPath = path.replace("/",File.separator);
+        Remote newRemote=new Remote(name,correntedPath);
+    }
+    //rm_remote
+    public void rmRemote(String name){
+        if(!Utils.isRemoteExist(name)){
+            System.out.println("A remote with that name does not exist.");
+            return ;
+        }else{
+            File file =Utils.join(REMOTES_DIR,name);
+            Utils.restrictedDelete(file);
+        }
+    }
+    //fetch
+    public void fetch(String name ,String branchName){
+        //检查远程仓库是否存在
+        String originalCwdPath=System.getProperty("user.dir");
+        if(!Utils.isRemoteExist(name)){
+            System.out.println("Remote directory not found.");
+            return ;
+        }
+        Remote remote=Remote.load(name);
+        String path=remote.getPath();
+        if(!Utils.isPathExist(path)){
+            System.out.println("Remote directory not found.");
+            return ;
+        }
+        if(!Utils.isRemotBranchExist(path,branchName)){
+            System.out.println("That remote does not have that branch.");
+            return ;
+        }
+        System.getProperty("user.dir",path);
+        Branch remoteBranch =Branch.load(branchName);
+        Commit remoteCommit =Commit.load(remoteBranch.getHeadCommitHash());
+        //
+        Set<String> allRemoteParentCommitHash=new HashSet<>();
+        findParentHelp(remoteCommit.getCommitHashId(),allRemoteParentCommitHash);
+        System.setProperty("user.dir",originalCwdPath);
+        for(String currentHash:allRemoteParentCommitHash){
+            File localCommitFile =new File(Repository.COMMITS_DIR,currentHash);
+            if(localCommitFile.exists()){
+                allRemoteParentCommitHash.remove(currentHash);
+            }else{
+                continue;
+            }
+        }
+        //将远程仓库的commit和blob复制过来
+        for(String currentCommitHash:allRemoteParentCommitHash){
+            System.setProperty("user.dir",path);
+            File RemoteCommit=Utils.join(COMMITS_DIR,currentCommitHash);
+            System.setProperty("user.dir",originalCwdPath);
+            File targerDir=Utils.join(COMMITS_DIR,currentCommitHash);
+            try{
+                Files.copy(RemoteCommit.toPath(),targerDir.toPath());
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+            //获取blob
+           Commit currentCommit =Commit.load(currentCommitHash);
+            for(Map.Entry<String,String> entry:currentCommit.getBlob().entrySet()){
+                System.getProperty("user.dir",originalCwdPath);
+                File targetBlob=Utils.join(BLOBS_DIR,entry.getValue());
+                if(targetBlob.exists()){
+                    continue;
+                }else{
+                    System.setProperty("user.dir",path);
+                    File RemoteBlob=Utils.join(BLOBS_DIR,entry.getValue());
+                    try{
+                        Files.copy(RemoteBlob.toPath(),targetBlob.toPath());
+                    }catch(IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        //在本地获取branch并指向
+        System.getProperty("user.dir",originalCwdPath);
+        String LocalTrackingBranchName=remote.getName()+"/"+branchName;
+        String currentTrackingBranchName=LocalTrackingBranchName.replace("/",File.separator);
+        Branch newBranch =new Branch(currentTrackingBranchName,remoteCommit.getCommitHashId());
+        newBranch.save();
         }
 
     }

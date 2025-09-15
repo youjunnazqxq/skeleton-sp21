@@ -241,7 +241,7 @@ class Utils {
     public static final File OBJECTS_DIR = Utils.join(GITLET_DIR, "objects");
     public static final File COMMITS_DIR = Utils.join(OBJECTS_DIR, "commits");
     public static final File BRANCHES_DIR = join(Repository.GITLET_DIR, "branches");
-
+    public static final File REMOTES_DIR=join(Repository.GITLET_DIR,"remotes");
     //检查仓库是否存在
     public static void isGitletExist(){
          if(!GITLET_DIR.exists()){
@@ -307,5 +307,32 @@ class Utils {
             }
         }
         return null;
+    }
+    //检查远程仓库是否存在
+    public static  boolean isRemoteExist(String name){
+        File file =Utils.join(REMOTES_DIR,name);
+        if(file.exists()){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    //检查远程仓库的路径是否存在
+    public static boolean isPathExist(String path){
+        File file =new File(path);
+        if(!file.exists()||!file.isDirectory()){
+            return false;
+        }
+        return true;
+    }
+    //检查远程分支的仓库是否存在
+    public static boolean isRemotBranchExist(String path,String branchName){
+        File dir=new File(path);
+        File branchesFile = new File(dir,"branches");
+        File remoteBranch =new File (branchesFile,branchName);
+        if(remoteBranch.exists()){
+            return true;
+        }
+        return false;
     }
 }
