@@ -573,23 +573,24 @@ public class Repository  {
             System.out.println("That remote does not have that branch.");
             return ;
         }
-        System.getProperty("user.dir",path);
+        System.setProperty("user.dir",path);
         Branch remoteBranch =Branch.load(branchName);
         Commit remoteCommit =Commit.load(remoteBranch.getHeadCommitHash());
         //
         Set<String> allRemoteParentCommitHash=new HashSet<>();
         findParentHelp(remoteCommit.getCommitHashId(),allRemoteParentCommitHash);
         System.setProperty("user.dir",originalCwdPath);
+        List<String> splitCommitHash=new ArrayList<>();
         for(String currentHash:allRemoteParentCommitHash){
             File localCommitFile =new File(Repository.COMMITS_DIR,currentHash);
             if(localCommitFile.exists()){
-                allRemoteParentCommitHash.remove(currentHash);
-            }else{
                 continue;
+            }else{
+                splitCommitHash.add(currentHash);
             }
         }
         //将远程仓库的commit和blob复制过来
-        for(String currentCommitHash:allRemoteParentCommitHash){
+        for(String currentCommitHash:splitCommitHash){
             System.setProperty("user.dir",path);
             File RemoteCommit=Utils.join(COMMITS_DIR,currentCommitHash);
             System.setProperty("user.dir",originalCwdPath);
@@ -602,7 +603,7 @@ public class Repository  {
             //获取blob
            Commit currentCommit =Commit.load(currentCommitHash);
             for(Map.Entry<String,String> entry:currentCommit.getBlob().entrySet()){
-                System.getProperty("user.dir",originalCwdPath);
+                System.setProperty("user.dir",originalCwdPath);
                 File targetBlob=Utils.join(BLOBS_DIR,entry.getValue());
                 if(targetBlob.exists()){
                     continue;
