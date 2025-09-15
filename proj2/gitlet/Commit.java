@@ -197,4 +197,14 @@ public class Commit implements Serializable {
             allFileName.add(entry.getKey());
         }
     }
+    public static Commit loadFrom(File repoDir, String commitHash) {
+        if (commitHash == null) {
+            return null;
+        }
+        File commitFile = Utils.join(repoDir, ".gitlet", "objects", "commits", commitHash);
+        if (!commitFile.exists()) {
+            return null;
+        }
+        return Utils.readObject(commitFile, Commit.class);
+    }
 }

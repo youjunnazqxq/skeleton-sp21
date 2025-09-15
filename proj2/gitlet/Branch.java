@@ -32,4 +32,11 @@ public class Branch implements Serializable {
         File saveBranch = Utils.join(BRANCHES_DIR,name);
         return Utils.readObject(saveBranch,Branch.class);
     }
+    public static Branch loadFrom(File repoDir, String branchName) {
+        File branchFile = Utils.join(repoDir, ".gitlet", "branches", branchName);
+        if (!branchFile.exists()) {
+            return null;
+        }
+        return Utils.readObject(branchFile, Branch.class);
+    }
 }
