@@ -547,13 +547,24 @@ public class Repository  {
         newRemote.save();
     }
     //rm_remote
-    public void rmRemote(String name){
-        if(!Utils.isRemoteExist(name)){
+    public void rmRemote(String remoteName) {
+        // 步骤1：校验远程是否存在（文档10-1545：不存在则抛错）
+        File remoteConfigFile = getRemoteConfigFile(remoteName);
+        if (!remoteConfigFile.exists()) {
             System.out.println("A remote with that name does not exist.");
-            return ;
-        }else{
-            File file =Utils.join(REMOTES_DIR,name);
-            Utils.restrictedDelete(file);
+            System.exit(0);
+        }
+
+        // 步骤2：安全删除远程配置文件（调用Utils.restrictedDelete，符合文档10-251工具方法要求）
+        try {
+            Utils.restrictedDelete(remoteConfigFile);
+            // 可选：若remotes目录为空，可删除目录（非必须，文档无强制要求）
+            if (REMOTES_DIR.listFiles().length == 0) {
+                Utils.restrictedDelete(REMOTES_DIR);
+            }
+        } catch (IllegalArgumentException e) {
+            // 若触发此异常，说明路径仍错误，需重新检查路径构造
+            throw new RuntimeException("Failed to delete remote: " + e.getMessage());
         }
     }
     public void fetch(String name, String branchName) {
