@@ -556,87 +556,85 @@ public class Repository  {
             Utils.restrictedDelete(file);
         }
     }
-    //fetch
-        public void fetch(String name, String branchName) {
-            if (!Utils.isRemoteExist(name)) {
-                System.out.println("Remote directory not found.");
+    public void fetch(String name, String branchName) {
+        if (!Utils.isRemoteExist(name)) {
+            System.out.println("Remote directory not found.");
+            return;
+        }
+        Remote remote = Remote.load(name);
+
+        // [FIXED] 正确解析远程仓库路径
+        File remoteGitletDir = new File(remote.getPath());
+        File remoteRepoDir = remoteGitletDir.getParentFile();
+
+        if (!remoteGitletDir.isDirectory()) {
+            System.out.println("Remote directory not found.");
+            return;
+        }
+
+        Branch remoteBranch = Branch.loadFrom(remoteRepoDir, branchName);
+        if (remoteBranch == null) {
+            System.out.println("That remote does not have that branch.");
+            return;
+        }
+        String remoteHeadCommitHash = remoteBranch.getHeadCommitHash();
+
+        Set<String> remoteCommitHashes = new HashSet<>();
+        findParentHelp(remoteHeadCommitHash, remoteCommitHashes, remoteRepoDir);
+
+        for (String commitHash : remoteCommitHashes) {
+            File localCommitFile = Utils.join(COMMITS_DIR, commitHash);
+            if (localCommitFile.exists()) {
+                continue;
+            }
+
+            File remoteCommitFile = Utils.join(remoteGitletDir, "objects", "commits", commitHash);
+            try {
+                Files.copy(remoteCommitFile.toPath(), localCommitFile.toPath());
+            } catch (IOException e) {
+                e.printStackTrace();
                 return;
             }
-            Remote remote = Remote.load(name);
-            File remoteRepoDir = new File(remote.getPath());
-            File remoteGitletDir = Utils.join(remoteRepoDir, ".gitlet");
 
-            if (!remoteGitletDir.exists()) {
-                System.out.println("Remote directory not found.");
-                return;
-            }
-
-            // 从远程仓库加载分支信息
-            Branch remoteBranch = Branch.loadFrom(remoteRepoDir, branchName);
-            if (remoteBranch == null) {
-                System.out.println("That remote does not have that branch.");
-                return;
-            }
-            String remoteHeadCommitHash = remoteBranch.getHeadCommitHash();
-
-            // 从远程仓库获取所有需要的 commit 哈希
-            Set<String> remoteCommitHashes = new HashSet<>();
-            findParentHelp(remoteHeadCommitHash, remoteCommitHashes, remoteRepoDir);
-
-            // 复制所有本地不存在的 commit 和 blob
-            for (String commitHash : remoteCommitHashes) {
-                File localCommitFile = Utils.join(COMMITS_DIR, commitHash);
-                if (localCommitFile.exists()) {
+            Commit copiedCommit = Commit.load(commitHash);
+            for (String blobHash : copiedCommit.getBlob().values()) {
+                File localBlobFile = Utils.join(BLOBS_DIR, blobHash);
+                if (localBlobFile.exists()) {
                     continue;
                 }
-
-                // 1. 复制 Commit 对象
-                File remoteCommitFile = Utils.join(remoteGitletDir, "objects", "commits", commitHash);
+                File remoteBlobFile = Utils.join(remoteGitletDir, "objects", "blobs", blobHash);
                 try {
-                    Files.copy(remoteCommitFile.toPath(), localCommitFile.toPath());
+                    Files.copy(remoteBlobFile.toPath(), localBlobFile.toPath());
                 } catch (IOException e) {
                     e.printStackTrace();
                     return;
                 }
-
-                // 2. 复制该 Commit 关联的所有 Blob 对象
-                Commit copiedCommit = Commit.load(commitHash); // 从本地加载刚复制过来的commit
-                for (String blobHash : copiedCommit.getBlob().values()) {
-                    File localBlobFile = Utils.join(BLOBS_DIR, blobHash);
-                    if (localBlobFile.exists()) {
-                        continue;
-                    }
-                    File remoteBlobFile = Utils.join(remoteGitletDir, "objects", "blobs", blobHash);
-                    try {
-                        Files.copy(remoteBlobFile.toPath(), localBlobFile.toPath());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return;
-                    }
-                }
             }
-
-            // 3. 在本地创建或更新远程跟踪分支，例如 "R1/master"
-            String localTrackingBranchName = name + "/" + branchName;
-            Branch localTrackingBranch = Branch.load(localTrackingBranchName); // 尝试加载
-            if (localTrackingBranch != null) {
-                localTrackingBranch.changeCommit(remoteHeadCommitHash);
-            } else {
-                localTrackingBranch = new Branch(localTrackingBranchName, remoteHeadCommitHash);
-            }
-            localTrackingBranch.save();
         }
 
-    // push (重构后)
+        String localTrackingBranchName = name + "/" + branchName;
+        Branch localTrackingBranch;
+        if (isBranchExist(localTrackingBranchName)) {
+            localTrackingBranch = Branch.load(localTrackingBranchName);
+            localTrackingBranch.changeCommit(remoteHeadCommitHash);
+        } else {
+            localTrackingBranch = new Branch(localTrackingBranchName, remoteHeadCommitHash);
+        }
+        localTrackingBranch.save();
+    }
+
     public void push(String remoteName, String targetBranchName) {
         if (!Utils.isRemoteExist(remoteName)) {
             System.out.println("Remote directory not found.");
             return;
         }
         Remote remote = Remote.load(remoteName);
-        File remoteRepoDir = new File(remote.getPath());
-        File remoteGitletDir = Utils.join(remoteRepoDir, ".gitlet");
-        if (!remoteGitletDir.exists()) {
+
+        // [FIXED] 正确解析远程仓库路径
+        File remoteGitletDir = new File(remote.getPath());
+        File remoteRepoDir = remoteGitletDir.getParentFile();
+
+        if (!remoteGitletDir.isDirectory()) {
             System.out.println("Remote directory not found.");
             return;
         }
@@ -644,21 +642,17 @@ public class Repository  {
         Branch localBranch = Branch.load(head.getCurrentBranch());
         String localHeadHash = localBranch.getHeadCommitHash();
 
-        // 从远程仓库加载分支，以获取其 head commit
         Branch remoteBranch = Branch.loadFrom(remoteRepoDir, targetBranchName);
         String remoteHeadHash = (remoteBranch != null) ? remoteBranch.getHeadCommitHash() : null;
 
-        // 获取本地分支的完整提交历史
         Set<String> localHistoryHashes = new HashSet<>();
         findParentHelp(localHeadHash, localHistoryHashes);
 
-        // 检查远程分支的 head 是否是本地 head 的祖先
         if (remoteHeadHash != null && !localHistoryHashes.contains(remoteHeadHash)) {
             System.out.println("Please pull down remote changes before pushing.");
             return;
         }
 
-        // 筛选出远程仓库没有的 commit
         Set<String> commitsToPush = new HashSet<>();
         for (String commitHash : localHistoryHashes) {
             File remoteCommitFile = Utils.join(remoteGitletDir, "objects", "commits", commitHash);
@@ -667,27 +661,24 @@ public class Repository  {
             }
         }
 
-        // 复制所有需要的 commit 和 blob 到远程仓库
         for (String commitHash : commitsToPush) {
-            // 1. 复制 Commit 对象
             File localCommitFile = Utils.join(COMMITS_DIR, commitHash);
             File remoteCommitFile = Utils.join(remoteGitletDir, "objects", "commits", commitHash);
             try {
-                remoteCommitFile.getParentFile().mkdirs(); // 确保远程目录存在
+                remoteCommitFile.getParentFile().mkdirs();
                 Files.copy(localCommitFile.toPath(), remoteCommitFile.toPath());
             } catch (IOException e) {
                 e.printStackTrace();
                 return;
             }
 
-            // 2. 复制关联的 Blob 对象
             Commit commitToCopy = Commit.load(commitHash);
             for (String blobHash : commitToCopy.getBlob().values()) {
                 File localBlobFile = Utils.join(BLOBS_DIR, blobHash);
                 File remoteBlobFile = Utils.join(remoteGitletDir, "objects", "blobs", blobHash);
                 if (!remoteBlobFile.exists()) {
                     try {
-                        remoteBlobFile.getParentFile().mkdirs(); // 确保远程目录存在
+                        remoteBlobFile.getParentFile().mkdirs();
                         Files.copy(localBlobFile.toPath(), remoteBlobFile.toPath());
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -697,36 +688,30 @@ public class Repository  {
             }
         }
 
-        // 3. 更新远程仓库中的分支文件，使其指向新的 head commit
         Branch newOrUpdatedRemoteBranch = new Branch(targetBranchName, localHeadHash);
         File remoteBranchFile = Utils.join(remoteGitletDir, "branches", targetBranchName);
         Utils.writeObject(remoteBranchFile, newOrUpdatedRemoteBranch);
     }
-    //pull
-    public void pull(String remoteName, String remoteBranchName) {// 根据规范，fetch 后会创建一个名为 "[remote name]/[remote branch name]" 的本地分支 [cite: 2160]
+
+    public void pull(String remoteName, String remoteBranchName) {
         String localTrackingBranchName = remoteName + "/" + remoteBranchName;
         fetch(remoteName, remoteBranchName);
-        // 与新创建或更新的本地跟踪分支进行合并
         merge(localTrackingBranchName);
     }
-    //获取特定目录下的父代
+
     private void findParentHelp(String currentCommitHash, Set<String> allParentCommitHashes, File repoDir) {
         if (currentCommitHash == null || allParentCommitHashes.contains(currentCommitHash)) {
             return;
         }
         allParentCommitHashes.add(currentCommitHash);
-
-        // 使用新的辅助方法从指定仓库加载 commit
         Commit currentCommit = Commit.loadFrom(repoDir, currentCommitHash);
         if (currentCommit == null) {
             return;
         }
-
         findParentHelp(currentCommit.getFirstParentHash(), allParentCommitHashes, repoDir);
         if (currentCommit.isMergeCommit()) {
             findParentHelp(currentCommit.getSecondParentHash(), allParentCommitHashes, repoDir);
         }
     }
     }
-
 
