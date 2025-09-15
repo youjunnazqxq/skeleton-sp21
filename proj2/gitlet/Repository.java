@@ -544,6 +544,7 @@ public class Repository  {
         }
         String correntedPath = path.replace("/",File.separator);
         Remote newRemote=new Remote(name,correntedPath);
+        newRemote.save();
     }
     //rm_remote
     public void rmRemote(String name){
@@ -629,7 +630,7 @@ public class Repository  {
         //push
     public void push(String remoteName,String targetBranchName){
         String orignalDir=System.getProperty("user.dir");
-        File remoteFile=Utils.join(GITLET_DIR,remoteName);
+        File remoteFile=Utils.join(REMOTES_DIR,remoteName);
         if(!remoteFile.exists()){
             System.out.println("Remote directory not found.");
             return;
@@ -648,7 +649,7 @@ public class Repository  {
         Branch localBranch=Branch.load(head.getCurrentBranch());
         findParentHelp(localBranch.getHeadCommitHash(),allCopyCommit);
         for(String commitHashToCopy:allCopyCommit){
-            System.setProperty("user.dir",remotePath);
+             System.setProperty("user.dir",remotePath);
             File remoteCommitFile =Utils.join(COMMITS_DIR,commitHashToCopy);
             if(remoteCommitFile.exists()){
                 continue;
